@@ -8,12 +8,7 @@ import org.antlr.jetbrains.wichplugin.parsing.ParserErrorListener;
 import org.antlr.jetbrains.wichplugin.parsing.ParsingResult;
 import org.antlr.jetbrains.wichplugin.parsing.WichLexer;
 import org.antlr.jetbrains.wichplugin.parsing.WichParser;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -24,12 +19,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collection;
 
-import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
-
 public class WichSyntaxHighlighter extends SyntaxHighlighter {
-	public static final TextAttributesKey TEMPLATE_NAME =
-		createTextAttributesKey("TEMPLATE_NAME", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
-
 	public WichSyntaxHighlighter(Editor editor, int startIndex) {
 		super(editor, startIndex);
 	}
@@ -60,18 +50,55 @@ public class WichSyntaxHighlighter extends SyntaxHighlighter {
 
 	@Override
 	public void highlightTree(ParserRuleContext tree, Parser parser) {
-		final Collection<ParseTree> options = XPath.findAll(tree, "//formalArg/ID", parser);
+		final Collection<ParseTree> options = XPath.findAll(tree, "//expr/ID", parser);
 		for (ParseTree o : options) {
 			TerminalNode tnode = (TerminalNode)o;
 			if ( !(tnode instanceof ErrorNode) ) {
 				highlightToken(tnode.getSymbol(),
-							   new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_FIELD});
+						new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_FIELD});
 			}
 		}
-		final Collection<ParseTree> ids = XPath.findAll(tree, "//template/ID", parser);
+		final Collection<ParseTree> args = XPath.findAll(tree, "//formal_arg/ID", parser);
+		for (ParseTree a : args) {
+			TerminalNode tnode = (TerminalNode)a;
+			if ( !(tnode instanceof ErrorNode) ) {
+				highlightToken(tnode.getSymbol(),
+						new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_FIELD});
+			}
+		}
+		final Collection<ParseTree> assigns = XPath.findAll(tree, "//statement/ID", parser);
+		for (ParseTree a : assigns) {
+			TerminalNode tnode = (TerminalNode)a;
+			if ( !(tnode instanceof ErrorNode) ) {
+				highlightToken(tnode.getSymbol(),
+						new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_FIELD});
+			}
+		}
+		final Collection<ParseTree> defs = XPath.findAll(tree, "//vardef/ID", parser);
+		for (ParseTree a : defs) {
+			TerminalNode tnode = (TerminalNode)a;
+			if ( !(tnode instanceof ErrorNode) ) {
+				highlightToken(tnode.getSymbol(),
+						new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_FIELD});
+			}
+		}
+		final Collection<ParseTree> foo = XPath.findAll(tree, "//primary/ID", parser);
+		for (ParseTree a : foo) {
+			TerminalNode tnode = (TerminalNode)a;
+			if ( !(tnode instanceof ErrorNode) ) {
+				highlightToken(tnode.getSymbol(),
+						new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_FIELD});
+			}
+		}
+		Collection<ParseTree> ids = XPath.findAll(tree, "//function/ID", parser);
 		for (ParseTree id : ids) {
 			TerminalNode tnode = (TerminalNode)id;
-			highlightToken(tnode.getSymbol(), new TextAttributesKey[]{TEMPLATE_NAME});
+			highlightToken(tnode.getSymbol(), new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_METHOD});
+		}
+		ids = XPath.findAll(tree, "//call_expr/ID", parser);
+		for (ParseTree id : ids) {
+			TerminalNode tnode = (TerminalNode)id;
+			highlightToken(tnode.getSymbol(), new TextAttributesKey[]{DefaultLanguageHighlighterColors.INSTANCE_METHOD});
 		}
 	}
 
@@ -101,6 +128,8 @@ public class WichSyntaxHighlighter extends SyntaxHighlighter {
 			case WichLexer.TRUE :
 			case WichLexer.FALSE :
 				return new TextAttributesKey[]{DefaultLanguageHighlighterColors.KEYWORD};
+			case WichLexer.STRING :
+				return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
 			case Token.INVALID_TYPE:
 				return new TextAttributesKey[]{HighlighterColors.BAD_CHARACTER};
 			default:

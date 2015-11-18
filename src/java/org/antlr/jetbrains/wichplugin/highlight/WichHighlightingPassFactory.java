@@ -29,7 +29,7 @@ public class WichHighlightingPassFactory
 		if ( editor==null ) return null;
 		Document doc = editor.getDocument();
 		VirtualFile vfile = FileDocumentManager.getInstance().getFile(doc);
-		if ( vfile==null || !vfile.getName().endsWith(".wich") ) return null;
+		if ( vfile==null || !vfile.getName().endsWith(".w") ) return null;
 		return new WichHighlightingPass(myProject, editor);
 	}
 }

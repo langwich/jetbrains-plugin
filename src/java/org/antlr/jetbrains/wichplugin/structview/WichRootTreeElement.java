@@ -35,7 +35,7 @@ public class WichRootTreeElement extends WichStructureViewTreeElement {
 		if ( rules.size()==0 ) return EMPTY_ARRAY;
 		List<TreeElement> treeElements = new ArrayList<TreeElement>(rules.size());
 		for (ParseTree t : rules) {
-			ParseTree nameNode = t.getChild(0);
+			ParseTree nameNode = t.getChild(1);
 			treeElements.add(new WichTemplateDefTreeElement(model, nameNode));
 		}
 //		System.out.println("rules="+rules);

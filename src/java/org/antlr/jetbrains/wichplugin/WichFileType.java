@@ -30,12 +30,12 @@ public class WichFileType extends LanguageFileType {
 	@NotNull
 	@Override
 	public String getDefaultExtension() {
-		return "wich";
+		return "w";
 	}
 
 	@Nullable
 	@Override
 	public Icon getIcon() {
-		return Icons.STG_FILE;
+		return Icons.WICH_FILE;
 	}
 }

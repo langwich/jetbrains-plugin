@@ -7,6 +7,6 @@ import org.jetbrains.annotations.NotNull;
 public class WichFileTypeFactory extends FileTypeFactory {
 	@Override
 	public void createFileTypes(@NotNull FileTypeConsumer fileTypeConsumer) {
-		fileTypeConsumer.consume(WichFileType.INSTANCE, "wich");
+		fileTypeConsumer.consume(WichFileType.INSTANCE, "w");
 	}
 }

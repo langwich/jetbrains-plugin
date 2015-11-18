@@ -26,7 +26,7 @@ public abstract class WichStructureViewTreeElement
 	@Nullable
 	@Override
 	public Icon getIcon(boolean unused) {
-		return Icons.STG_FILE;
+		return Icons.WICH_FILE;
 	}
 
 	@Nullable

@@ -7,17 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -95,7 +87,7 @@ public class WichPluginController implements ProjectComponent {
 
 	public void installListeners() {
 		LOG.info("installListeners " + project.getName());
-		// Listen for .wich file saves
+		// Listen for .w file saves
 		VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
 		// Listen for editor window changes
@@ -181,7 +173,7 @@ public class WichPluginController implements ProjectComponent {
 		@Override
 		public void contentsChanged(VirtualFileEvent event) {
 			final VirtualFile vfile = event.getFile();
-			if ( !vfile.getName().endsWith(".wich") ) return;
+			if ( !vfile.getName().endsWith(".w") ) return;
 			if ( !projectIsClosed ) fileSavedEvent(vfile);
 		}
 	}
@@ -191,7 +183,7 @@ public class WichPluginController implements ProjectComponent {
 		public void selectionChanged(FileEditorManagerEvent event) {
 			if ( !projectIsClosed ) {
 				final VirtualFile vfile = event.getNewFile();
-				if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
+				if ( vfile!=null && vfile.getName().endsWith(".w") ) {
 					currentEditorFileSwitchedEvent(event.getOldFile(), event.getNewFile());
 				}
 			}
@@ -200,7 +192,7 @@ public class WichPluginController implements ProjectComponent {
 		@Override
 		public void fileClosed(FileEditorManager source, VirtualFile vfile) {
 			if ( !projectIsClosed ) {
-				if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
+				if ( vfile!=null && vfile.getName().endsWith(".w") ) {
 					editorFileClosedEvent(vfile);
 				}
 			}
@@ -211,7 +203,7 @@ public class WichPluginController implements ProjectComponent {
 		@Override
 		public void documentChanged(DocumentEvent e) {
 			VirtualFile vfile = FileDocumentManager.getInstance().getFile(e.getDocument());
-			if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
+			if ( vfile!=null && vfile.getName().endsWith(".w") ) {
 				editorDocumentAlteredEvent(e.getDocument());
 			}
 		}
@@ -223,7 +215,7 @@ public class WichPluginController implements ProjectComponent {
 			final Editor editor = event.getEditor();
 			final Document doc = editor.getDocument();
 			VirtualFile vfile = FileDocumentManager.getInstance().getFile(doc);
-			if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
+			if ( vfile!=null && vfile.getName().endsWith(".w") ) {
 				STGroupFileEditorListener listener = new STGroupFileEditorListener();
 				doc.putUserData(EDITOR_DOCUMENT_LISTENER_KEY, listener);
 				doc.addDocumentListener(listener);

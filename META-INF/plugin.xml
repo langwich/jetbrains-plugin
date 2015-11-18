@@ -44,6 +44,6 @@
   <extensions defaultExtensionNs="com.intellij">
       <fileTypeFactory implementation="org.antlr.jetbrains.wichplugin.WichFileTypeFactory"/>
       <structureViewBuilder factoryClass="org.antlr.jetbrains.wichplugin.structview.WichStructureViewBuilderProvider"/>
-      <additionalTextAttributes scheme="Default" file="colorSchemes/WichDefault.xml"/>
+      <!--<additionalTextAttributes scheme="Default" file="colorSchemes/WichDefault.xml"/>-->
   </extensions>
 </idea-plugin>

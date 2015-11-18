@@ -18,7 +18,7 @@ public abstract class WichItemPresentation implements ItemPresentation {
 	@Override
 	public Icon getIcon(boolean unused) {
 		if ( node.getParent()==null ) return null;
-		return Icons.STG_FILE;
+		return Icons.WICH_FILE;
 	}
 
 	@Nullable
