@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class WichPluginController implements ProjectComponent {
 	public static final String PLUGIN_ID = "org.antlr.jetbrains.st4plugin";
-	public static final Logger LOG = Logger.getInstance("STGroupPluginController");
+	public static final Logger LOG = Logger.getInstance("WichPluginController");
 	public static final Key<STGroupFileEditorListener> EDITOR_DOCUMENT_LISTENER_KEY =
 		Key.create("EDITOR_DOCUMENT_LISTENER_KEY");
 	public static final Key<DocumentListener> EDITOR_STRUCTVIEW_LISTENER_KEY =
@@ -95,7 +95,7 @@ public class WichPluginController implements ProjectComponent {
 
 	public void installListeners() {
 		LOG.info("installListeners " + project.getName());
-		// Listen for .stg file saves
+		// Listen for .wich file saves
 		VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
 		// Listen for editor window changes
@@ -181,7 +181,7 @@ public class WichPluginController implements ProjectComponent {
 		@Override
 		public void contentsChanged(VirtualFileEvent event) {
 			final VirtualFile vfile = event.getFile();
-			if ( !vfile.getName().endsWith(".stg") ) return;
+			if ( !vfile.getName().endsWith(".wich") ) return;
 			if ( !projectIsClosed ) fileSavedEvent(vfile);
 		}
 	}
@@ -191,7 +191,7 @@ public class WichPluginController implements ProjectComponent {
 		public void selectionChanged(FileEditorManagerEvent event) {
 			if ( !projectIsClosed ) {
 				final VirtualFile vfile = event.getNewFile();
-				if ( vfile!=null && vfile.getName().endsWith(".stg") ) {
+				if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
 					currentEditorFileSwitchedEvent(event.getOldFile(), event.getNewFile());
 				}
 			}
@@ -200,7 +200,7 @@ public class WichPluginController implements ProjectComponent {
 		@Override
 		public void fileClosed(FileEditorManager source, VirtualFile vfile) {
 			if ( !projectIsClosed ) {
-				if ( vfile!=null && vfile.getName().endsWith(".stg") ) {
+				if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
 					editorFileClosedEvent(vfile);
 				}
 			}
@@ -211,7 +211,7 @@ public class WichPluginController implements ProjectComponent {
 		@Override
 		public void documentChanged(DocumentEvent e) {
 			VirtualFile vfile = FileDocumentManager.getInstance().getFile(e.getDocument());
-			if ( vfile!=null && vfile.getName().endsWith(".stg") ) {
+			if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
 				editorDocumentAlteredEvent(e.getDocument());
 			}
 		}
@@ -223,7 +223,7 @@ public class WichPluginController implements ProjectComponent {
 			final Editor editor = event.getEditor();
 			final Document doc = editor.getDocument();
 			VirtualFile vfile = FileDocumentManager.getInstance().getFile(doc);
-			if ( vfile!=null && vfile.getName().endsWith(".stg") ) {
+			if ( vfile!=null && vfile.getName().endsWith(".wich") ) {
 				STGroupFileEditorListener listener = new STGroupFileEditorListener();
 				doc.putUserData(EDITOR_DOCUMENT_LISTENER_KEY, listener);
 				doc.addDocumentListener(listener);

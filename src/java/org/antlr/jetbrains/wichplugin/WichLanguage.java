@@ -6,6 +6,6 @@ public class WichLanguage extends Language {
     public static final WichLanguage INSTANCE = new WichLanguage();
 
     private WichLanguage() {
-        super("STGroup");
+        super("Wich");
     }
 }

@@ -1,0 +1,49 @@
+<idea-plugin version="2">
+  <id>org.antlr.jetbrains.wichplugin</id>
+  <name>Wich plugin</name>
+  <version>0.1</version>
+  <vendor email="parrt@antlr.org" url="https://github.com/langwich/jetbrains-plugin">ANTLR Project</vendor>
+
+  <description><![CDATA[
+  <p>
+      This plugin is for the "langwich" language. It works with Intellij 14.x-15.
+      It should work in other Jetbrains IDEs.
+     </p>
+
+<p>
+<a href="https://github.com/langwich/jetbrains-plugin">Github source</a>
+  ]]></description>
+
+  <change-notes><![CDATA[
+  ]]>
+  </change-notes>
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="139"/> <!-- requires 14.x, 15.x -->
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products -->
+  <depends>com.intellij.modules.lang</depends>
+
+  <application-components>
+  </application-components>
+
+  <project-components>
+	  <component>
+       <implementation-class>org.antlr.jetbrains.wichplugin.WichPluginController</implementation-class>
+   </component>
+    <component>
+        <implementation-class>org.antlr.jetbrains.wichplugin.highlight.WichHighlightingPassFactory</implementation-class>
+    </component>
+  </project-components>
+
+  <actions>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+      <fileTypeFactory implementation="org.antlr.jetbrains.wichplugin.WichFileTypeFactory"/>
+      <structureViewBuilder factoryClass="org.antlr.jetbrains.wichplugin.structview.WichStructureViewBuilderProvider"/>
+      <additionalTextAttributes scheme="Default" file="colorSchemes/WichDefault.xml"/>
+  </extensions>
+</idea-plugin>

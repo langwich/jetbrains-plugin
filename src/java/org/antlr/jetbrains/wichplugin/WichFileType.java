@@ -30,7 +30,7 @@ public class WichFileType extends LanguageFileType {
 	@NotNull
 	@Override
 	public String getDefaultExtension() {
-		return "stg";
+		return "wich";
 	}
 
 	@Nullable
