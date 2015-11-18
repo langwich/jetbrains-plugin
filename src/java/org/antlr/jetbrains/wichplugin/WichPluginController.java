@@ -17,6 +17,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.antlr.jetbrains.wichplugin.structview.WichStructureViewModel;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +33,11 @@ public class WichPluginController implements ProjectComponent {
 		Key.create("EDITOR_DOCUMENT_LISTENER_KEY");
 	public static final Key<DocumentListener> EDITOR_STRUCTVIEW_LISTENER_KEY =
 		Key.create("EDITOR_STRUCTVIEW_LISTENER_KEY");
+    public static final String WICH_WINDOW_ID = "Wich";
 
-	public Project project;
+    public ToolWindow wichWindow;
+
+    public Project project;
 	public boolean projectIsClosed = false;
 
 	public MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
@@ -61,6 +69,8 @@ public class WichPluginController implements ProjectComponent {
 		LOG.info("StringTemplate 4 Plugin version "+version+", Java version "+ SystemInfo.JAVA_VERSION);
 
 		installListeners();
+
+		createToolWindow();
 	}
 
 	@Override
@@ -84,7 +94,17 @@ public class WichPluginController implements ProjectComponent {
 		return "st.ProjectComponent";
 	}
 
+	public void createToolWindow() {
+		ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+		WichPanel wichPanel = new WichPanel();
+        ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+        Content content = contentFactory.createContent(wichPanel, "", false);
 
+        wichWindow = toolWindowManager.registerToolWindow(WICH_WINDOW_ID, true, ToolWindowAnchor.BOTTOM);
+        wichWindow.getContentManager().addContent(content);
+        wichWindow.setIcon(Icons.WICH_FILE);
+	}
+	
 	public void installListeners() {
 		LOG.info("installListeners " + project.getName());
 		// Listen for .w file saves
