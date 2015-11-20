@@ -31,7 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.messages.MessageBusConnection;
-import org.antlr.jetbrains.wichplugin.genwindow.WichToolWindow;
+import org.antlr.jetbrains.wichplugin.genwindow.WichToolWindowPanel;
 import org.antlr.jetbrains.wichplugin.structview.WichStructureViewModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +45,7 @@ public class WichPluginController implements ProjectComponent {
     public static final String WICH_WINDOW_ID = "Wich compilation";
 
     public ToolWindow wichWindow;
+	public WichToolWindowPanel wichPanel;
 
     public Project project;
 	public boolean projectIsClosed = false;
@@ -105,7 +106,7 @@ public class WichPluginController implements ProjectComponent {
 
 	public void createToolWindow() {
 		ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-		WichToolWindow wichPanel = new WichToolWindow();
+		wichPanel = new WichToolWindowPanel();
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         Content content = contentFactory.createContent(wichPanel, "", false);
 
@@ -159,6 +160,7 @@ public class WichPluginController implements ProjectComponent {
 	}
 
 	public void editorDocumentAlteredEvent(Document doc) {
+		wichPanel.updateOutput(doc);
 	}
 
 	public void editorFileClosedEvent(VirtualFile vfile) {
