@@ -7,9 +7,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.messages.MessageBusConnection;
+import org.antlr.jetbrains.wichplugin.genwindow.WichToolWindow;
 import org.antlr.jetbrains.wichplugin.structview.WichStructureViewModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +42,7 @@ public class WichPluginController implements ProjectComponent {
 		Key.create("EDITOR_DOCUMENT_LISTENER_KEY");
 	public static final Key<DocumentListener> EDITOR_STRUCTVIEW_LISTENER_KEY =
 		Key.create("EDITOR_STRUCTVIEW_LISTENER_KEY");
-    public static final String WICH_WINDOW_ID = "Wich";
+    public static final String WICH_WINDOW_ID = "Wich compilation";
 
     public ToolWindow wichWindow;
 
@@ -96,7 +105,7 @@ public class WichPluginController implements ProjectComponent {
 
 	public void createToolWindow() {
 		ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-		WichPanel wichPanel = new WichPanel();
+		WichToolWindow wichPanel = new WichToolWindow();
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         Content content = contentFactory.createContent(wichPanel, "", false);
 
@@ -104,7 +113,7 @@ public class WichPluginController implements ProjectComponent {
         wichWindow.getContentManager().addContent(content);
         wichWindow.setIcon(Icons.WICH_FILE);
 	}
-	
+
 	public void installListeners() {
 		LOG.info("installListeners " + project.getName());
 		// Listen for .w file saves
