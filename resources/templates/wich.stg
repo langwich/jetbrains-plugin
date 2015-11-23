@@ -1,0 +1,210 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2015 Terence Parr, Hanzhou Shi, Shuai Yuan, Yuanyuan Zhang
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+CPrimitiveBinaryOpMap ::= [
+	"*":"*",
+	"/":"/",
+	"+":"+",
+	"-":"-",
+	">":">",
+	">=":">=",
+	"<":"<",
+	"<=":"<=",
+	"==":"==",
+	"!=":"!=",
+	"&&":"&&",
+	"||":"||"
+]
+
+CStringBinaryOpMap ::= [
+	"+":"String_add",
+	">":"String_gt",
+	">=":"String_ge",
+	"<":"String_lt",
+	"<=":"String_le",
+	"==":"String_eq",
+	"!=":"String_neq"
+]
+
+CVectorBinaryOpMap ::= [
+	"*":"Vector_mul",
+	"/":"Vector_div",
+	"+":"Vector_add",
+	"-":"Vector_sub",
+	"==":"Vector_eq",
+	"!=":"Vector_neq",
+	".":"Vector_dot"
+]
+
+File(f, functions, main, decls) ::= <<
+#include \<stdio.h>
+#include "wich.h"
+
+<functions:funcDecl()>
+<functions>
+<main>
+>>
+
+funcDecl(funcTemplate) ::= <<
+<funcTemplate.returnType> <funcTemplate.f.name>(<funcTemplate.args;separator=",">);<\n>
+>>
+
+MainFunc(f,returnType,args,body) ::= <<
+int main(int ____c, char *____v[])
+{
+	setup_error_handlers();
+	<body>
+	return 0;
+}
+<\n>
+>>
+
+Func(f,returnType,args,body)::=<<
+<returnType> <f.name>(<args;separator=",">)
+{
+    <body>
+}
+<\n>
+>>
+
+MainBlock(b,varDefs,stats,initialize,terminate)::= <<
+<Block(...)>
+>>
+
+FuncBlock(b,varDefs,stats,initialize,terminate)::= <<
+<varDefs; separator="\n">
+<stats; separator="\n">
+<terminate; separator="\n">
+>>
+
+Block(b,varDefs,stats,initialize,terminate)::= <<
+<varDefs; separator="\n">
+<stats; separator="\n">
+>>
+
+AssignStat(a,varRef,expr,type)::=<<
+<varRef> = <expr>;
+>>
+
+CallStat(c,callExpr) ::=<<
+<callExpr>;
+>>
+
+ElementAssignStat(e,varRef,index,expr) ::= <<
+set_ith(<varRef>, <index>-1, <expr>);
+>>
+
+IfStat(i,condition,stat,elseStat) ::= <<
+if (<condition>) <stat><if(elseStat)>
+else <elseStat><endif>
+>>
+
+WhileStat(w,condition, stat) ::= <<
+while (<condition>) <stat;separator="\n">
+>>
+
+ReturnStat(r,expr,returnType)  ::= "return <expr>;"
+
+BlockStatement(b,block) ::= <<
+{
+    <block>
+}
+>>
+
+VarInitStat(v,varRef,expr,type) ::= "<varRef> = <expr>;"
+
+VarDefStat(v,type) ::= "<type> <v.name>;"
+StringVarDefStat ::= VarDefStat
+VectorVarDefStat ::= VarDefStat
+
+StringDecl(s) ::= ""
+
+CompositeModelObject(cs, modelObjects) ::= <<
+<modelObjects; separator="\n">
+>>
+
+PrintNewLine(p) 		  ::= <<printf("\n");>>
+PrintStringStat(ps,expr)  ::= <<print_string(<expr>);>>
+PrintVectorStat(pv,expr)  ::= <<print_vector(<expr>);>>
+PrintIntStat(pi,expr) 	  ::= <<printf("%d\n", <expr>);>>
+PrintFloatStat(pf,expr)   ::= <<printf("%1.2f\n", <expr>);>>
+PrintBooleanStat(pb,expr) ::= <<printf("%d\n", <expr>);>>
+
+BinaryPrimitiveOp(op,left,right,type) ::= "(<left> <CPrimitiveBinaryOpMap.(op.wichOp)> <right>)"
+BinaryStringOp(op, left, right,resType,type)  ::= "<CStringBinaryOpMap.(op.wichOp)>(<left>,<right>)"
+BinaryVectorOp(op, left, right,resType,type)  ::= "<CVectorBinaryOpMap.(op.wichOp)>(<left>,<right>)"
+
+VectorFromInt(v,vector,intLiteral,type)	::= "Vector_from_int(<intLiteral>,(<vector>).vector->length)"
+VectorFromFloat(v,vector,floatLiteral,type)	::= "Vector_from_float(<floatLiteral>,(<vector>).vector->length)"
+StringFromVector(s,vector,type) ::= "String_from_vector(<vector>)"
+StringFromInt(s,intExpr,type) ::= "String_from_int(<intExpr>)"
+StringFromFloat(s,floatExpr,type) ::= "String_from_float(<floatExpr>)"
+FloatFromInt(e,expr,type) ::= "<expr>"
+
+IntLiteral(i,type)	::= "<i.value>"
+FloatLiteral(f,type)	::= "<f.value>"
+TrueLiteral(t,type) ::= "<t.value>"
+FalseLiteral(f,type) ::="<f.value>"
+VarRef(v,type)		::= "<v.name>"
+HeapVarRef(v,type)	::= "<v.name>"
+
+StringLiteral(s,type) ::= <<
+String_new(<s.literal>)
+>>
+
+VectorLiteral(v,elems,type) ::= <<
+Vector_new((double []){<elems; separator=",">}, <v.vectorLength>)
+>>
+
+FuncCall(c,args,type) ::= <<
+<c.funcName>(<args;separator=",">)
+>>
+
+FuncCallVoid(c,args,type) ::= <<
+<c.funcName>(<args;separator=",">)
+>>
+
+StringIndexExpr(s,expr,type) ::= <<
+String_from_char(<s.varName>->str[(<expr>)-1])
+>>
+
+VectorIndexExpr(v,expr,type) ::= "ith(<v.varName>, (<expr>)-1)"
+
+NegateExpr(n,expr,type) ::= "-<expr>"
+
+NotExpr(ne,expr,type) ::= "!<expr>"
+
+OpExpr(o,lExp,rExp,type) ::= "<lExp> <o.op> <rExp>"
+
+VectorElement(e, expr, type) ::= "<expr>"
+
+ArgDef(arg,type) ::= "<type> <arg.name>"
+
+VoidType(v) ::= "void"
+IntType(t) ::= "int"
+FloatType(t) ::= "double"
+VectorType(t) ::= "PVector_ptr"
+StringType(t) ::= "String *"
+BooleanType(t) ::= "bool"
+TmpVarDef(t,type) ::="<typeMo> tmp<t.varIndex>;"

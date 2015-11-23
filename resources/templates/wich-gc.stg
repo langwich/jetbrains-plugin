@@ -1,0 +1,51 @@
+import "wich.stg"
+
+File(f, functions, main, decls) ::= <<
+#include \<stdio.h>
+#include "wich.h"
+#include "gc.h"
+
+<functions:funcDecl()>
+<functions>
+<main>
+>>
+
+MainFunc(f,returnType,args,body) ::= <<
+int main(int ____c, char *____v[])
+{
+	setup_error_handlers();
+	gc_begin_func();
+	<body>
+	gc_end_func();
+
+	gc();
+	Heap_Info info = get_heap_info();
+	if ( info.live!=0 ) fprintf(stderr, "%d objects remain after collection\n", info.live);
+	gc_shutdown();
+	return 0;
+}
+<\n>
+>>
+
+Func(f,returnType,args,body)::=<<
+<returnType> <f.name>(<args;separator=",">)
+{
+	gc_begin_func();
+	<body>
+	gc_end_func();
+}
+<\n>
+>>
+
+BlockStatement(b,block) ::= <<
+{
+	<block>
+}
+>>
+
+ReturnStat(r,expr,returnType)   ::= "{gc_end_func(); return <expr>;}"
+ReturnHeapVarStat(r,expr)	    ::= "{gc_end_func(); return <expr>;}"
+ReturnVectorHeapVarStat(r,expr,type) ::= "{gc_end_func(); return <expr>;}"
+
+StringVarDefStat(v,type)	 ::= "STRING(<v.name>);"
+VectorVarDefStat(v,type)	 ::= "VECTOR(<v.name>);"
