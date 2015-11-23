@@ -2,6 +2,7 @@ package org.antlr.jetbrains.wichplugin;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -36,7 +37,7 @@ import org.antlr.jetbrains.wichplugin.structview.WichStructureViewModel;
 import org.jetbrains.annotations.NotNull;
 
 public class WichPluginController implements ProjectComponent {
-	public static final String PLUGIN_ID = "org.antlr.jetbrains.st4plugin";
+	public static final String PLUGIN_ID = "org.antlr.jetbrains.wichplugin";
 	public static final Logger LOG = Logger.getInstance("WichPluginController");
 	public static final Key<STGroupFileEditorListener> EDITOR_DOCUMENT_LISTENER_KEY =
 		Key.create("EDITOR_DOCUMENT_LISTENER_KEY");
@@ -154,13 +155,15 @@ public class WichPluginController implements ProjectComponent {
 	public void currentEditorFileSwitchedEvent(VirtualFile oldFile, VirtualFile newFile) {
 		LOG.info("currentEditorFileSwitchedEvent "+(oldFile!=null?oldFile.getPath():"none")+
 				 " -> "+(newFile!=null?newFile.getPath():"none")+" "+project.getName());
-		if ( newFile==null ) { // all files must be closed I guess
-			return;
+		if ( newFile==null ) return;
+		final Document doc = FileDocumentManager.getInstance().getDocument(newFile);
+		if ( doc!=null ) {
+			editorDocumentAlteredEvent(doc);
 		}
 	}
 
 	public void editorDocumentAlteredEvent(Document doc) {
-		wichPanel.updateOutput(doc);
+		ApplicationManager.getApplication().invokeLater( ()->wichPanel.updateOutput(doc) );
 	}
 
 	public void editorFileClosedEvent(VirtualFile vfile) {

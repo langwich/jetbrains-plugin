@@ -1,6 +1,7 @@
 package org.antlr.jetbrains.wichplugin.genwindow;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
@@ -11,6 +12,8 @@ import wich.errors.WichErrorHandler;
 import wich.semantics.SymbolTable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,16 +35,30 @@ public class WichToolWindowPanel extends JBPanel {
 	private JBTabbedPane tabs;
 	private JBScrollPane CTab;
 	private JTextArea Coutput;
+	private JBScrollPane CRefCountTab;
+	private JTextArea CRefCountoutput;
 	private JBScrollPane LLVMTab;
 	private JTextArea LLVMoutput;
 	private JBScrollPane BytecodeTab;
 	private JTextArea Bytecodeoutput;
-	private JTextArea execOutput;
+	private JTextArea[] execOutput = new JTextArea[4];
 	private JBScrollPane execScrollPane;
 
 	public WichToolWindowPanel() {
 		super(new BorderLayout());
 		setupGUI();
+
+		tabs.addChangeListener(
+			new ChangeListener() {
+				@Override
+				public void stateChanged(ChangeEvent e) {
+					switchTabs(tabs.getSelectedIndex());
+				}
+			});
+	}
+
+	public void switchTabs(int selectedIndex) {
+		execScrollPane.setViewportView(execOutput[selectedIndex]);
 	}
 
 	public void setupGUI() {
@@ -49,6 +66,11 @@ public class WichToolWindowPanel extends JBPanel {
 		Coutput = new JTextArea();
 		Coutput.setText("Generated C code");
 		CTab.setViewportView(Coutput);
+
+		CRefCountTab = new JBScrollPane();
+		CRefCountoutput = new JTextArea();
+		CRefCountoutput.setText("Generated C code for ref counting");
+		CRefCountTab.setViewportView(CRefCountoutput);
 
 		LLVMTab = new JBScrollPane();
 		LLVMoutput = new JTextArea();
@@ -62,72 +84,92 @@ public class WichToolWindowPanel extends JBPanel {
 
 		tabs = new JBTabbedPane();
 		tabs.addTab("C", CTab);
+		tabs.addTab("C w/ref counting", CRefCountTab);
 		tabs.addTab("LLVM", LLVMTab);
 		tabs.addTab("Bytecode", BytecodeTab);
 
 		execScrollPane = new JBScrollPane();
-		execOutput = new JTextArea(4,80);
-		execOutput.setText("foo");
-		execScrollPane.setViewportView(execOutput);
+		for (int i = 0; i<execOutput.length; i++) {
+			execOutput[i] = new JTextArea(4, 80);
+			execOutput[i].setText("");
+		}
+		switchTabs(0); // show plain C output first
 
-		add(tabs, BorderLayout.CENTER);
-		add(execScrollPane, BorderLayout.SOUTH);
+		Splitter splitPane = new Splitter();
+		splitPane.setFirstComponent(tabs);
+		splitPane.setSecondComponent(execScrollPane);
+
+		add(splitPane, BorderLayout.CENTER);
 	}
 
 	public void updateOutput(Document doc) {
 		String wichCode = doc.getText();
+		genCode(wichCode, Coutput,          execOutput[0], CompilerUtils.CodeGenTarget.PLAIN);
+		genCode(wichCode, CRefCountoutput,  execOutput[1], CompilerUtils.CodeGenTarget.REFCOUNTING);
+		genCode(wichCode, LLVMoutput,       execOutput[2], CompilerUtils.CodeGenTarget.LLVM);
+		genCode(wichCode, Bytecodeoutput,   execOutput[3], CompilerUtils.CodeGenTarget.BYTECODE);
+	}
+
+	public void genCode(String wichCode, JTextArea outputPane, JTextArea execOutput,
+	                    CompilerUtils.CodeGenTarget target)
+	{
+		execOutput.setText("");
 		SymbolTable symtab = new SymbolTable();
 		WichErrorHandler err = new WichErrorHandler();
-		CompilerUtils.CodeGenTarget target = CompilerUtils.CodeGenTarget.PLAIN;
 		String genCode = CompilerUtils.genCode(wichCode, symtab, err, target);
-		Coutput.setText(genCode);
 
-		if ( err.getErrorNum()==0 ) {
-			String gendCodeFile = WORKING_DIR+"script.c";
-			try {
-				CompilerUtils.writeFile(gendCodeFile, genCode, StandardCharsets.UTF_8);
-			}
-			catch (IOException ioe) {
-				execOutput.setText("can't write "+gendCodeFile+":"+Arrays.toString(ioe.getStackTrace()));
-			}
-			java.util.List<String> cc = new ArrayList<>();
-			String executable = "script";
-			File execF = new File(executable);
-			if ( execF.exists() ) {
-				execF.delete();
-			}
-			cc.addAll(
-				Arrays.asList(
-					"cc", "-g", "-o", executable,
-					gendCodeFile,
-					"-L", LIB_DIR,
-					"-D"+target.flag,
-					"-I", INCLUDE_DIR, "-std=c99", "-O0")
-			         );
-			for (String lib : target.libs) {
-				cc.add("-l"+lib);
-			}
-			String[] cmd = cc.toArray(new String[cc.size()]);
-			Triple<Integer, String, String> result = null;
-			try { result = exec(cmd); }
-			catch (Exception e) {
-				execOutput.setText("can't compile "+gendCodeFile+Arrays.toString(e.getStackTrace()));
-			}
-			String cmdS = Utils.join(cmd, " ");
-			execOutput.setText("$ "+cmdS+"\n");
-			if ( result!=null && result.a!=0 ) {
-				throw new RuntimeException("failed compilation of "+gendCodeFile+" with result code "+result.a+
-										   " from\n"+
-				                           cmdS+"\nstderr:\n"+result.c);
-			}
-			try {
-				execOutput.insert("$ ./"+executable+"\n", execOutput.getText().length());
-				String output = executeC(executable);
-				execOutput.insert(output, execOutput.getText().length());
-			}
-			catch (Exception ie) {
-				System.err.println("problem with exec of "+executable);
-			}
+		if ( err.getErrorNum()>0 ) {
+			outputPane.setText(err.toString());
+			return;
+		}
+
+		outputPane.setText(genCode);
+		String gendCodeFile = WORKING_DIR+"script"+target.fileExtension;
+		try {
+			CompilerUtils.writeFile(gendCodeFile, genCode, StandardCharsets.UTF_8);
+		}
+		catch (IOException ioe) {
+			execOutput.setText("can't write "+gendCodeFile+":"+Arrays.toString(ioe.getStackTrace()));
+			return;
+		}
+		List<String> cc = new ArrayList<>();
+		String executable = "script";
+		File execF = new File(executable);
+		if ( execF.exists() ) {
+			execF.delete();
+		}
+		cc.addAll(
+			Arrays.asList(
+				"cc", "-g", "-o", executable,
+				gendCodeFile,
+				"-L", LIB_DIR,
+				"-D"+target.flag,
+				"-I", INCLUDE_DIR, "-std=c99", "-O0")
+		         );
+		for (String lib : target.libs) {
+			cc.add("-l"+lib);
+		}
+		String[] cmd = cc.toArray(new String[cc.size()]);
+		Triple<Integer, String, String> result = null;
+		try { result = exec(cmd); }
+		catch (Exception e) {
+			execOutput.setText("can't compile "+gendCodeFile+Arrays.toString(e.getStackTrace()));
+		}
+		String cmdS = Utils.join(cmd, " ");
+//			execOutput.setText("$ "+cmdS+"\n");
+		if ( result!=null && result.a!=0 ) {
+			execOutput.insert("failed compilation of "+gendCodeFile+" with result code "+result.a+
+			                  " from\n"+
+			                  cmdS+"\nstderr:\n"+result.c,
+			                  execOutput.getText().length());
+		}
+		try {
+//				execOutput.insert("$ ./"+executable+"\n", execOutput.getText().length());
+			String output = executeC(executable);
+			execOutput.insert(output, execOutput.getText().length());
+		}
+		catch (Exception ie) {
+			System.err.println("problem with exec of "+executable);
 		}
 	}
 
