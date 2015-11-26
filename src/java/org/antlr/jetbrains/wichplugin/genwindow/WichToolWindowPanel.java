@@ -29,6 +29,7 @@ import java.util.List;
 public class WichToolWindowPanel extends JBPanel {
 	protected static final String WORKING_DIR = "/tmp/";
 	protected static final String LIB_DIR = "/usr/local/wich/lib";
+	protected static final String WRUN = "/usr/local/wich/bin/wrun";
 	protected static final String INCLUDE_DIR = "/usr/local/wich/include";
 	public static final String CLANG = "/usr/local/clang-3.7.0";
 
@@ -97,13 +98,13 @@ public class WichToolWindowPanel extends JBPanel {
 
 	public void updateOutput(Document doc) {
 		String wichCode = doc.getText();
-		genCode(wichCode, 0, CompilerUtils.CodeGenTarget.PLAIN);
-		genCode(wichCode, 1, CompilerUtils.CodeGenTarget.REFCOUNTING);
-		genCode(wichCode, 2, CompilerUtils.CodeGenTarget.LLVM);
-		genCode(wichCode, 3, CompilerUtils.CodeGenTarget.BYTECODE);
+		execute(wichCode, 0, CompilerUtils.CodeGenTarget.PLAIN);
+		execute(wichCode, 1, CompilerUtils.CodeGenTarget.REFCOUNTING);
+		execute(wichCode, 2, CompilerUtils.CodeGenTarget.LLVM);
+		execute(wichCode, 3, CompilerUtils.CodeGenTarget.BYTECODE);
 	}
 
-	public void genCode(String wichCode, int targetIndex,
+	public void execute(String wichCode, int targetIndex,
 	                    CompilerUtils.CodeGenTarget target)
 	{
 		JTextArea translation = this.translations[targetIndex];
@@ -111,6 +112,8 @@ public class WichToolWindowPanel extends JBPanel {
 		JTextArea console = consoles[targetIndex];
 		translation.setText("");
 		output.setText("");
+
+		// COMPILE
 
 		SymbolTable symtab = new SymbolTable();
 		WichErrorHandler err = new WichErrorHandler();
@@ -127,9 +130,26 @@ public class WichToolWindowPanel extends JBPanel {
 			CompilerUtils.writeFile(gendCodeFile, genCode, StandardCharsets.UTF_8);
 		}
 		catch (IOException ioe) {
-			console.setText("can't write "+gendCodeFile+":"+Arrays.toString(ioe.getStackTrace()));
+			console.setText("can't write "+gendCodeFile+":"+ioe);
 			return;
 		}
+
+		// EXECUTE
+
+		if ( target==CompilerUtils.CodeGenTarget.BYTECODE ) {
+			try {
+				console.setText("$ "+WRUN+" "+gendCodeFile+"\n");
+				String result = executeWASM(gendCodeFile);
+				output.insert(result, output.getText().length());
+			}
+			catch (Exception e) {
+				console.insert("can't execute bytecode "+gendCodeFile+"\n"+e,
+				               console.getText().length());
+			}
+
+			return;
+		}
+
 		List<String> cc = new ArrayList<>();
 		String executable = "script";
 		File execF = new File(executable);
@@ -164,7 +184,7 @@ public class WichToolWindowPanel extends JBPanel {
 		Triple<Integer, String, String> resultTriple = null;
 		try { resultTriple = exec(cmd); }
 		catch (Exception e) {
-			console.setText("can't compile "+gendCodeFile+Arrays.toString(e.getStackTrace()));
+			console.setText("can't compile "+gendCodeFile+"\n"+Arrays.toString(e.getStackTrace()));
 		}
 		String cmdS = Utils.join(cmd, " ");
 		console.setText("$ "+cmdS+"\n");
@@ -215,7 +235,18 @@ public class WichToolWindowPanel extends JBPanel {
 	protected String executeC(String executable) throws IOException, InterruptedException {
 		Triple<Integer, String, String> result = exec(new String[]{"./"+executable});
 		if ( result.a!=0 ) {
-			throw new RuntimeException("failed execution of "+executable+" with result code "+result.a+"; stderr:\n"+result.c);
+			throw new RuntimeException("failed execution of "+executable+" with result code "+
+			                           result.a+"; stderr:\n"+result.c);
+		}
+		return result.b;
+	}
+
+	protected String executeWASM(String wasmFilename) throws IOException, InterruptedException {
+		Triple<Integer, String, String> result = exec(new String[]{ WRUN, wasmFilename});
+		if ( result.a!=0 ) {
+			throw new RuntimeException("failed execution of " + wasmFilename +
+			                           " with result code "+result.a+"; stderr:\n"+
+				                           result.c);
 		}
 		return result.b;
 	}
