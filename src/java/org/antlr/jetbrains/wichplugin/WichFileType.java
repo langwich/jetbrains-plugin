@@ -18,13 +18,13 @@ public class WichFileType extends LanguageFileType {
 	@NotNull
 	@Override
 	public String getName() {
-		return "StringTemplate v4 template group file";
+		return "Wich file";
 	}
 
 	@NotNull
 	@Override
 	public String getDescription() {
-		return "StringTemplate v4 template group file";
+		return "Wich file";
 	}
 
 	@NotNull

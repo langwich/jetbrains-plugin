@@ -77,7 +77,7 @@ public class WichPluginController implements ProjectComponent {
 		if ( plugin!=null ) {
 			version = plugin.getVersion();
 		}
-		LOG.info("StringTemplate 4 Plugin version "+version+", Java version "+ SystemInfo.JAVA_VERSION);
+		LOG.info("Wich Plugin version "+version+", Java version "+ SystemInfo.JAVA_VERSION);
 
 		installListeners();
 
