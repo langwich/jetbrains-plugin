@@ -39,6 +39,11 @@
   </project-components>
 
   <actions>
+      <action id="ConfigureWichAction"
+              class="org.antlr.jetbrains.wichplugin.actions.ConfigureWichAction"
+              text="Configure Wich" description="Configure Wich">
+          <add-to-group group-id="BuildMenu" anchor="last"/>
+      </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

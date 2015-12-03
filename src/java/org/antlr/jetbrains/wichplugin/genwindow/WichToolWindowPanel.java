@@ -1,11 +1,13 @@
 package org.antlr.jetbrains.wichplugin.genwindow;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
+import org.antlr.jetbrains.wichplugin.dialogs.WichConfigDialog;
 import org.antlr.v4.runtime.misc.Triple;
 import org.antlr.v4.runtime.misc.Utils;
 import wich.codegen.CompilerUtils;
@@ -28,10 +30,6 @@ import java.util.List;
 
 public class WichToolWindowPanel extends JBPanel {
 	protected static final String WORKING_DIR = "/tmp/";
-	protected static final String LIB_DIR = "/usr/local/wich/lib";
-	protected static final String WRUN = "/usr/local/wich/bin/wrun";
-	protected static final String INCLUDE_DIR = "/usr/local/wich/include";
-	public static final String CLANG = "/usr/local/clang-3.7.0";
 
 	private JBTabbedPane translationTabbedPane;
 
@@ -46,9 +44,13 @@ public class WichToolWindowPanel extends JBPanel {
 	private JBPanel outputPanel; // has title, output
 	private JBLabel outputLabel; // says which target gen'd this output
 
-	public WichToolWindowPanel() {
+	public final Project project;
+
+	public WichToolWindowPanel(Project project) {
 		super(new BorderLayout());
 		setupGUI();
+
+		this.project = project;
 
 		translationTabbedPane.addChangeListener(
 			new ChangeListener() {
@@ -107,6 +109,12 @@ public class WichToolWindowPanel extends JBPanel {
 	public void execute(String wichCode, int targetIndex,
 	                    CompilerUtils.CodeGenTarget target)
 	{
+		String wich = WichConfigDialog.getProp(project, WichConfigDialog.PROP_WICH_HOME, WichConfigDialog.DEFAULT_WICH_HOME);
+		final String LIB_DIR = wich+"/lib";
+		final String WRUN = wich+"/bin/wrun";
+		final String INCLUDE_DIR = wich+"/include";
+		final String CLANG = WichConfigDialog.getProp(project, WichConfigDialog.PROP_CLANG_HOME, WichConfigDialog.DEFAULT_CLANG_HOME);
+
 		JTextArea translation = this.translations[targetIndex];
 		JTextArea output = execOutputs[targetIndex];
 		JTextArea console = consoles[targetIndex];
@@ -242,6 +250,8 @@ public class WichToolWindowPanel extends JBPanel {
 	}
 
 	protected String executeWASM(String wasmFilename) throws IOException, InterruptedException {
+		String wich = WichConfigDialog.getProp(project, WichConfigDialog.PROP_WICH_HOME, WichConfigDialog.DEFAULT_WICH_HOME);
+		final String WRUN = wich+"/bin/wrun";
 		Triple<Integer, String, String> result = exec(new String[]{ WRUN, wasmFilename});
 		if ( result.a!=0 ) {
 			throw new RuntimeException("failed execution of " + wasmFilename +

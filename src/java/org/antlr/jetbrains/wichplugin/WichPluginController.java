@@ -107,7 +107,7 @@ public class WichPluginController implements ProjectComponent {
 
 	public void createToolWindow() {
 		ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-		wichPanel = new WichToolWindowPanel();
+		wichPanel = new WichToolWindowPanel(project);
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         Content content = contentFactory.createContent(wichPanel, "", false);
 
