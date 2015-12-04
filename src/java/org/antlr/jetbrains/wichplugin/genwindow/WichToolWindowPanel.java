@@ -242,22 +242,13 @@ public class WichToolWindowPanel extends JBPanel {
 
 	protected String executeC(String executable) throws IOException, InterruptedException {
 		Triple<Integer, String, String> result = exec(new String[]{"./"+executable});
-		if ( result.a!=0 ) {
-			throw new RuntimeException("failed execution of "+executable+" with result code "+
-			                           result.a+"; stderr:\n"+result.c);
-		}
-		return result.b;
+		return result.b + result.c;
 	}
 
 	protected String executeWASM(String wasmFilename) throws IOException, InterruptedException {
 		String wich = WichConfigDialog.getProp(project, WichConfigDialog.PROP_WICH_HOME, WichConfigDialog.DEFAULT_WICH_HOME);
 		final String WRUN = wich+"/bin/wrun";
 		Triple<Integer, String, String> result = exec(new String[]{ WRUN, wasmFilename});
-		if ( result.a!=0 ) {
-			throw new RuntimeException("failed execution of " + wasmFilename +
-			                           " with result code "+result.a+"; stderr:\n"+
-				                           result.c);
-		}
-		return result.b;
+		return result.b + result.c;
 	}
 }
