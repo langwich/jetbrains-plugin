@@ -50,5 +50,8 @@
       <fileTypeFactory implementation="org.antlr.jetbrains.wichplugin.WichFileTypeFactory"/>
       <structureViewBuilder factoryClass="org.antlr.jetbrains.wichplugin.structview.WichStructureViewBuilderProvider"/>
       <!--<additionalTextAttributes scheme="Default" file="colorSchemes/WichDefault.xml"/>-->
+      <applicationConfigurable instance="org.antlr.jetbrains.wichplugin.dialogs.WichConfigDialog"
+                           id="Wich Configuration"
+                           displayName="Wich Configuration"/>
   </extensions>
 </idea-plugin>
