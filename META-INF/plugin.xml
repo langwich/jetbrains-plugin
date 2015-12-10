@@ -48,5 +48,6 @@
       <applicationConfigurable instance="org.antlr.jetbrains.wichplugin.dialogs.WichConfigDialog"
                            id="Wich Configuration"
                            displayName="Wich Configuration"/>
+
   </extensions>
 </idea-plugin>
