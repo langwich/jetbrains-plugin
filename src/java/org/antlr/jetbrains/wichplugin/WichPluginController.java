@@ -163,7 +163,7 @@ public class WichPluginController implements ProjectComponent {
 	}
 
 	public void editorDocumentAlteredEvent(Document doc) {
-		ApplicationManager.getApplication().invokeLater( ()->wichPanel.updateOutput(doc) );
+		ApplicationManager.getApplication().executeOnPooledThread(()->wichPanel.updateOutput(doc));
 	}
 
 	public void editorFileClosedEvent(VirtualFile vfile) {

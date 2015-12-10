@@ -1,5 +1,6 @@
 package org.antlr.jetbrains.wichplugin.genwindow;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -27,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class WichToolWindowPanel extends JBPanel {
 	protected static final String WORKING_DIR = "/tmp/";
@@ -118,8 +120,8 @@ public class WichToolWindowPanel extends JBPanel {
 		JTextArea translation = this.translations[targetIndex];
 		JTextArea output = execOutputs[targetIndex];
 		JTextArea console = consoles[targetIndex];
-		translation.setText("");
-		output.setText("");
+		setText(translation,"");
+		setText(output,"");
 
 		// COMPILE
 
@@ -128,17 +130,17 @@ public class WichToolWindowPanel extends JBPanel {
 		String genCode = CompilerUtils.genCode(wichCode, symtab, err, target);
 
 		if ( err.getErrorNum()>0 ) {
-			translation.setText(err.toString());
+			setText(translation, err.toString());
 			return;
 		}
 
-		translation.setText(genCode);
+		setText(translation,genCode);
 		String gendCodeFile = WORKING_DIR+"script"+target.fileExtension;
 		try {
 			CompilerUtils.writeFile(gendCodeFile, genCode, StandardCharsets.UTF_8);
 		}
 		catch (IOException ioe) {
-			console.setText("can't write "+gendCodeFile+":"+ioe);
+			setText(console, "can't write "+gendCodeFile+":"+ioe);
 			return;
 		}
 
@@ -146,13 +148,12 @@ public class WichToolWindowPanel extends JBPanel {
 
 		if ( target==CompilerUtils.CodeGenTarget.BYTECODE ) {
 			try {
-				console.setText("$ "+WRUN+" "+gendCodeFile+"\n");
+				setText(console,"$ "+WRUN+" "+gendCodeFile+"\n");
 				String result = executeWASM(gendCodeFile);
-				output.insert(result, output.getText().length());
+				append(output, result);
 			}
 			catch (Exception e) {
-				console.insert("can't execute bytecode "+gendCodeFile+"\n"+e,
-				               console.getText().length());
+				append(console, "can't execute bytecode "+gendCodeFile+"\n"+e);
 			}
 
 			return;
@@ -192,20 +193,19 @@ public class WichToolWindowPanel extends JBPanel {
 		Triple<Integer, String, String> resultTriple = null;
 		try { resultTriple = exec(cmd); }
 		catch (Exception e) {
-			console.setText("can't compile "+gendCodeFile+"\n"+Arrays.toString(e.getStackTrace()));
+			setText(console,"can't compile "+gendCodeFile+"\n"+Arrays.toString(e.getStackTrace()));
 		}
 		String cmdS = Utils.join(cmd, " ");
-		console.setText("$ "+cmdS+"\n");
+		setText(console,"$ "+cmdS+"\n");
 		if ( resultTriple!=null && resultTriple.a!=0 ) {
-			console.insert("failed compilation of "+gendCodeFile+" with result code "+resultTriple.a+
-				                  " from\n"+
-				                  cmdS+"\nstderr:\n"+resultTriple.c,
-			               console.getText().length());
+			append(console, "failed compilation of "+gendCodeFile+" with result code "+resultTriple.a+
+				       " from\n"+
+				       cmdS+"\nstderr:\n"+resultTriple.c);
 		}
 		try {
-			console.insert("$ ./"+executable+"\n", console.getText().length());
+			append(console, "$ ./"+executable+"\n");
 			String result = executeC(executable);
-			output.insert(result, output.getText().length());
+			append(output, result);
 		}
 		catch (Exception ie) {
 			System.err.println("problem with exec of "+executable);
@@ -217,7 +217,13 @@ public class WichToolWindowPanel extends JBPanel {
 		pb.command(Arrays.asList(cmd)).directory(new File(WORKING_DIR));
 		Process process = pb.start();
 		try {
-			int resultCode = process.waitFor();
+			final int timeout = 2000; // 2s
+			boolean terminateNormally = process.waitFor(timeout, TimeUnit.MILLISECONDS);
+			if ( !terminateNormally ) {
+				System.err.println("Exec "+Arrays.toString(cmd)+" took > "+timeout+"ms");
+				process.destroy();
+			}
+			int resultCode = process.exitValue();
 			String stdout = dump(process.getInputStream());
 			String stderr = dump(process.getErrorStream());
 			Triple<Integer, String, String> ret = new Triple<>(resultCode, stdout, stderr);
@@ -250,5 +256,13 @@ public class WichToolWindowPanel extends JBPanel {
 		final String WRUN = wich+"/bin/wrun";
 		Triple<Integer, String, String> result = exec(new String[]{ WRUN, wasmFilename});
 		return result.b + result.c;
+	}
+
+	public void setText(JTextArea comp, String text) {
+		ApplicationManager.getApplication().invokeLater(() -> comp.setText(text));
+	}
+
+	public void append(JTextArea comp, String text) {
+		ApplicationManager.getApplication().invokeLater(() -> comp.insert(text, comp.getText().length()));
 	}
 }
